@@ -9,12 +9,27 @@
 </head>
 <body>
     <div class="container">
-        <header>
+        <header class="fade-in">
             <h1><i class="fas fa-camera"></i> Passport Photo Maker</h1>
             <p>High Quality Passport Photos in Seconds</p>
         </header>
 
-        <section class="how-it-works">
+        <div class="upload-section fade-in">
+            <div class="upload-box" id="uploadBox">
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                <div class="upload-content">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h3>Drag & Drop Your Photo Here</h3>
+                    <p>or</p>
+                    <button id="uploadBtn" class="upload-btn">
+                        <i class="fas fa-upload"></i> Upload Your Photo
+                    </button>
+                    <small>Supports JPG, PNG, WEBP formats</small>
+                </div>
+            </div>
+        </div>
+
+        <section class="how-it-works fade-in">
             <div class="container">
                 <h2><i class="fas fa-cogs"></i> How It Works</h2>
                 <div class="steps">
@@ -43,7 +58,7 @@
             </div>
         </section>
 
-        <section class="tips-section">
+        <section class="tips-section fade-in">
             <div class="container">
                 <h2><i class="fas fa-lightbulb"></i> Tips for Best Results</h2>
                 <div class="tips-grid">
@@ -106,21 +121,6 @@
         </section>
 
         <main>
-            <div class="upload-section">
-                <div class="upload-box" id="uploadBox">
-                    <input type="file" id="fileInput" accept="image/*" hidden>
-                    <div class="upload-content">
-                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <h3>Drag & Drop Your Photo Here</h3>
-                        <p>or</p>
-                        <button id="uploadBtn" class="upload-btn">
-                            <i class="fas fa-upload"></i> Upload Your Photo
-                        </button>
-                        <small>Supports JPG, PNG, WEBP formats</small>
-                    </div>
-                </div>
-            </div>
-
             <div class="editor-section" id="editorSection" style="display: none;">
                 <div class="editor-header">
                     <h3>Photo Editor</h3>
@@ -212,7 +212,7 @@
         </main>
     </div>
     
-    <footer class="developer-footer">
+    <footer class="developer-footer fade-in">
         <div class="footer-content">
             <div class="developer-info">
                 <i class="fas fa-code"></i>
