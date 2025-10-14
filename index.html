@@ -153,26 +153,7 @@
                         </div>
                     </div>
                     
-                    <div class="control-group">
-                        <label>Crop:</label>
-                        <div class="crop-controls">
-                            <button id="cropBtn" class="crop-btn">
-                                <i class="fas fa-crop"></i> Crop Photo
-                            </button>
-                            <button id="reCropBtn" class="control-btn" style="display: none;">
-                                <i class="fas fa-redo"></i> Re-Crop
-                            </button>
-                            <button id="removeBgBtn" class="control-btn">
-                                <i class="fas fa-magic"></i> Remove Background
-                            </button>
-                            <button id="cropApply" class="apply-btn" style="display: none;">
-                                <i class="fas fa-check"></i> Apply
-                            </button>
-                            <button id="cropCancel" class="cancel-btn" style="display: none;">
-                                <i class="fas fa-times"></i> Cancel
-                            </button>
-                        </div>
-                    </div>
+
                     
                     <div class="control-group">
                         <label>Photo Filters:</label>
@@ -189,9 +170,17 @@
                     <div class="control-group">
                         <label>Background:</label>
                         <div class="background-controls">
-                            <button class="bg-btn" data-bg="white" style="background: white;"></button>
-                            <button class="bg-btn" data-bg="blue" style="background: #3498db;"></button>
-                            <button class="bg-btn" data-bg="red" style="background: #e74c3c;"></button>
+                            <button class="bg-btn" data-bg="white" style="background: white;" title="White Background"></button>
+                            <button class="bg-btn" data-bg="blue" style="background: #3498db;" title="Blue Background"></button>
+                            <button class="bg-btn" data-bg="red" style="background: #e74c3c;" title="Red Background"></button>
+                            <button class="bg-btn" data-bg="green" style="background: #27ae60;" title="Green Background"></button>
+                            <button class="bg-btn" data-bg="gray" style="background: #95a5a6;" title="Gray Background"></button>
+                            <button class="bg-btn" data-bg="cream" style="background: #f4e4bc;" title="Cream Background"></button>
+                            <button class="bg-btn" data-bg="transparent" style="background: linear-gradient(45deg, #fff 25%, transparent 25%, transparent 75%, #fff 75%, #fff), linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd); background-size: 20px 20px; background-position: 0 0, 10px 10px;" title="Transparent Background"></button>
+                        </div>
+                        <div class="custom-bg-control" style="margin-top: 10px;">
+                            <input type="color" id="customBgColor" value="#ffffff" style="width: 50px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+                            <label for="customBgColor" style="margin-left: 10px; cursor: pointer;">Custom Color</label>
                         </div>
                     </div>                </div>
                 
@@ -206,6 +195,9 @@
                     </div>
                     <button id="download" class="primary-btn download-btn">
                         <i class="fas fa-download"></i> Download Photo
+                    </button>
+                    <button id="download6" class="primary-btn download-btn" style="margin-top: 10px;">
+                        <i class="fas fa-th"></i> Download 6 Photos Grid
                     </button>
                 </div>
             </div>

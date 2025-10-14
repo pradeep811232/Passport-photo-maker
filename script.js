@@ -12,17 +12,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoomLevel = document.getElementById('zoomLevel');
     const sizeSelect = document.getElementById('sizeSelect');
     const bgButtons = document.querySelectorAll('.bg-btn');
-    const cropBtn = document.getElementById('cropBtn');
-    const cropApply = document.getElementById('cropApply');
-    const cropCancel = document.getElementById('cropCancel');
-    const cropContainer = document.getElementById('cropContainer');
-    const cropBox = document.getElementById('cropBox');
+
 
     // Check if all elements exist before adding event listeners
     if (!uploadBox || !fileInput || !editorSection || !previewImage || 
         !rotateLeftBtn || !rotateRightBtn || !zoomInBtn || !zoomOutBtn || 
         !downloadBtn || !resetBtn || !zoomLevel || !sizeSelect) {
-        console.error('Some required elements are missing from the DOM');
+        console.error('Missing DOM element for event listener:', {
+            uploadBox: uploadBox,
+            fileInput: fileInput,
+            editorSection: editorSection,
+            previewImage: previewImage,
+            rotateLeftBtn: rotateLeftBtn,
+            rotateRightBtn: rotateRightBtn,
+            zoomInBtn: zoomInBtn,
+            zoomOutBtn: zoomOutBtn,
+            downloadBtn: downloadBtn,
+            resetBtn: resetBtn,
+            zoomLevel: zoomLevel,
+            sizeSelect: sizeSelect
+        });
         return;
     }
 
@@ -30,12 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let scale = 1;
     let currentBg = 'white';
     let originalImage = null;
-    let isCropping = false;
-    let cropData = null;
-    let isDragging = false;
-    let isResizing = false;
-    let dragStart = { x: 0, y: 0 };
-    let cropStart = { x: 0, y: 0, width: 0, height: 0 };
 
     // Upload functionality
     uploadBox.addEventListener('click', () => fileInput.click());
@@ -107,6 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
         rotation = 0;
         scale = 1;
         currentBg = 'white';
+        originalImage = null;
+        previewImage.src = '';
+        editorSection.style.display = 'none';
         updateTransform();
         updateBgButtons();
     });
@@ -120,6 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Custom color picker functionality
+    const customBgColor = document.getElementById('customBgColor');
+    if (customBgColor) {
+        customBgColor.addEventListener('change', (e) => {
+            currentBg = 'custom';
+            updateBackground();
+            updateBgButtons();
+        });
+    }
+
     function updateBgButtons() {
         bgButtons.forEach(btn => {
             btn.classList.remove('active');
@@ -127,6 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('active');
             }
         });
+        
+        // Handle custom color selection
+        if (currentBg === 'custom' && customBgColor) {
+            customBgColor.style.border = '3px solid #667eea';
+            customBgColor.style.boxShadow = '0 0 0 2px rgba(102, 126, 234, 0.3)';
+        } else if (customBgColor) {
+            customBgColor.style.border = 'none';
+            customBgColor.style.boxShadow = 'none';
+        }
     }
 
     function updateBackground() {
@@ -134,9 +159,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const colors = {
             white: '#ffffff',
             blue: '#3498db',
-            red: '#e74c3c'
+            red: '#e74c3c',
+            green: '#27ae60',
+            gray: '#95a5a6',
+            cream: '#f4e4bc',
+            transparent: 'transparent'
         };
-        previewContainer.style.backgroundColor = colors[currentBg];
+        
+        // Handle custom color
+        if (currentBg === 'custom' && customBgColor) {
+            previewContainer.style.backgroundColor = customBgColor.value;
+        } else {
+            previewContainer.style.backgroundColor = colors[currentBg];
+        }
+        
+        // Handle transparent background
+        if (currentBg === 'transparent') {
+            previewContainer.style.backgroundImage = `
+                linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                linear-gradient(-45deg, transparent 75%, #ccc 75%)
+            `;
+            previewContainer.style.backgroundSize = '20px 20px';
+            previewContainer.style.backgroundPosition = '0 0, 0 10px, 10px -10px, -10px 0px';
+        } else {
+            previewContainer.style.backgroundImage = 'none';
+        }
     }
 
     function updateTransform() {
@@ -178,9 +227,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const colors = {
             white: '#ffffff',
             blue: '#3498db',
-            red: '#e74c3c'
+            red: '#e74c3c',
+            green: '#27ae60',
+            gray: '#95a5a6',
+            cream: '#f4e4bc',
+            transparent: '#ffffff' // Will be handled separately
         };
-        ctx.fillStyle = colors[currentBg];
+        
+        // Handle custom color
+        if (currentBg === 'custom' && customBgColor) {
+            ctx.fillStyle = customBgColor.value;
+        } else if (currentBg === 'transparent') {
+            // Create transparent background pattern
+            const patternCanvas = document.createElement('canvas');
+            patternCanvas.width = 20;
+            patternCanvas.height = 20;
+            const patternCtx = patternCanvas.getContext('2d');
+            
+            patternCtx.fillStyle = '#cccccc';
+            patternCtx.fillRect(0, 0, 10, 10);
+            patternCtx.fillRect(10, 10, 10, 10);
+            patternCtx.fillStyle = '#ffffff';
+            patternCtx.fillRect(10, 0, 10, 10);
+            patternCtx.fillRect(0, 10, 10, 10);
+            
+            const pattern = ctx.createPattern(patternCanvas, 'repeat');
+            ctx.fillStyle = pattern;
+        } else {
+            ctx.fillStyle = colors[currentBg];
+        }
+        
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Draw the image with current transformations
@@ -219,243 +295,148 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = originalImage;
     });
 
-    // Initialize background buttons
-    updateBgButtons();
+    // Download 6 photos grid functionality
+    const download6Btn = document.getElementById('download6');
+    
+    download6Btn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Get selected size for individual photos
+        const selectedSize = sizeSelect.value;
+        let individualWidth, individualHeight;
+        
+        switch(selectedSize) {
+            case '35x45':
+                individualWidth = 413; // 35mm at 300dpi
+                individualHeight = 531; // 45mm at 300dpi
+                break;
+            case '2x2':
+                individualWidth = 600; // 2 inches at 300dpi
+                individualHeight = 600; // 2 inches at 300dpi
+                break;
+            case '33x48':
+                individualWidth = 390; // 33mm at 300dpi
+                individualHeight = 567; // 48mm at 300dpi
+                break;
+            default:
+                individualWidth = 413;
+                individualHeight = 531;
+        }
+        
+        // Calculate grid dimensions (2x3 layout)
+        const gridCols = 3;
+        const gridRows = 2;
+        const spacing = 20; // Space between photos
+        const margin = 40; // Margin around the grid
+        
+        canvas.width = (individualWidth * gridCols) + (spacing * (gridCols - 1)) + (margin * 2);
+        canvas.height = (individualHeight * gridRows) + (spacing * (gridRows - 1)) + (margin * 2);
+
+        // Set background color
+        const colors = {
+            white: '#ffffff',
+            blue: '#3498db',
+            red: '#e74c3c',
+            green: '#27ae60',
+            gray: '#95a5a6',
+            cream: '#f4e4bc',
+            transparent: '#ffffff'
+        };
+        
+        // Handle custom color
+        let bgColor;
+        if (currentBg === 'custom' && customBgColor) {
+            bgColor = customBgColor.value;
+        } else if (currentBg === 'transparent') {
+            // Create transparent background pattern
+            const patternCanvas = document.createElement('canvas');
+            patternCanvas.width = 20;
+            patternCanvas.height = 20;
+            const patternCtx = patternCanvas.getContext('2d');
+            
+            patternCtx.fillStyle = '#cccccc';
+            patternCtx.fillRect(0, 0, 10, 10);
+            patternCtx.fillRect(10, 10, 10, 10);
+            patternCtx.fillStyle = '#ffffff';
+            patternCtx.fillRect(10, 0, 10, 10);
+            patternCtx.fillRect(0, 10, 10, 10);
+            
+            const pattern = ctx.createPattern(patternCanvas, 'repeat');
+            ctx.fillStyle = pattern;
+        } else {
+            bgColor = colors[currentBg];
+            ctx.fillStyle = bgColor;
+        }
+        
+        if (currentBg !== 'transparent') {
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Draw the image with current transformations for each position
+        const img = new Image();
+        img.onload = () => {
+            // Calculate dimensions to fit individual photo
+            const imgAspect = img.width / img.height;
+            const individualAspect = individualWidth / individualHeight;
+            let drawWidth, drawHeight;
+            
+            if (imgAspect > individualAspect) {
+                drawWidth = individualWidth;
+                drawHeight = individualWidth / imgAspect;
+            } else {
+                drawHeight = individualHeight;
+                drawWidth = individualHeight * imgAspect;
+            }
+            
+            // Draw 6 photos in 2x3 grid
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    const x = margin + (col * (individualWidth + spacing));
+                    const y = margin + (row * (individualHeight + spacing));
+                    
+                    // Save context state
+                    ctx.save();
+                    
+                    // Translate to center of individual photo area
+                    ctx.translate(x + individualWidth/2, y + individualHeight/2);
+                    
+                    // Apply rotation
+                    ctx.rotate(rotation * Math.PI/180);
+                    
+                    // Apply scale
+                    ctx.scale(scale, scale);
+                    
+                    // Draw the image centered
+                    ctx.drawImage(img, 
+                        -drawWidth/2, -drawHeight/2, 
+                        drawWidth, drawHeight
+                    );
+                    
+                    // Restore context state
+                    ctx.restore();
+                }
+            }
+
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `passport-photo-${selectedSize}-6grid.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        img.src = originalImage;
+    });
 
     // Background removal functionality
     const removeBgBtn = document.getElementById('removeBgBtn');
     
     removeBgBtn.addEventListener('click', removeBackground);
 
-    // Crop functionality
-    cropBtn.addEventListener('click', startCrop);
-    cropApply.addEventListener('click', applyCrop);
-    cropCancel.addEventListener('click', cancelCrop);
 
-    function startCrop() {
-        if (!originalImage) return;
-        
-        isCropping = true;
-        cropContainer.style.display = 'block';
-        cropBtn.style.display = 'none';
-        cropApply.style.display = 'inline-block';
-        cropCancel.style.display = 'inline-block';
-        
-        // Initialize crop box
-        const img = previewImage;
-        const imgRect = img.getBoundingClientRect();
-        const containerRect = cropContainer.getBoundingClientRect();
-        
-        // Set initial crop box size (80% of image size)
-        const cropWidth = imgRect.width * 0.8;
-        const cropHeight = imgRect.height * 0.8;
-        const cropLeft = (imgRect.width - cropWidth) / 2;
-        const cropTop = (imgRect.height - cropHeight) / 2;
-        
-        cropBox.style.left = cropLeft + 'px';
-        cropBox.style.top = cropTop + 'px';
-        cropBox.style.width = cropWidth + 'px';
-        cropBox.style.height = cropHeight + 'px';
-        
-        // Add resize handles
-        addResizeHandles();
-        
-        // Add event listeners for dragging and resizing
-        cropBox.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-        document.addEventListener('mousemove', resize);
-        document.addEventListener('mouseup', stopResize);
-    }
 
-    function addResizeHandles() {
-        // Remove existing handles
-        const existingHandles = cropBox.querySelectorAll('.resize-handle');
-        existingHandles.forEach(handle => handle.remove());
-        
-        // Add new handles
-        const handles = ['nw', 'ne', 'sw', 'se'];
-        handles.forEach(position => {
-            const handle = document.createElement('div');
-            handle.className = `resize-handle ${position}`;
-            handle.addEventListener('mousedown', (e) => startResize(e, position));
-            cropBox.appendChild(handle);
-        });
-    }
 
-    function startDrag(e) {
-        if (e.target.classList.contains('resize-handle')) return;
-        
-        isDragging = true;
-        dragStart.x = e.clientX;
-        dragStart.y = e.clientY;
-        
-        const rect = cropBox.getBoundingClientRect();
-        const containerRect = cropContainer.getBoundingClientRect();
-        cropStart.x = rect.left - containerRect.left;
-        cropStart.y = rect.top - containerRect.top;
-        
-        e.preventDefault();
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-        
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
-        
-        let newLeft = cropStart.x + deltaX;
-        let newTop = cropStart.y + deltaY;
-        
-        // Keep crop box within image bounds
-        const containerRect = cropContainer.getBoundingClientRect();
-        const maxLeft = containerRect.width - cropBox.offsetWidth;
-        const maxTop = containerRect.height - cropBox.offsetHeight;
-        
-        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-        newTop = Math.max(0, Math.min(newTop, maxTop));
-        
-        cropBox.style.left = newLeft + 'px';
-        cropBox.style.top = newTop + 'px';
-    }
-
-    function stopDrag() {
-        isDragging = false;
-    }
-
-    function startResize(e, position) {
-        isResizing = true;
-        dragStart.x = e.clientX;
-        dragStart.y = e.clientY;
-        
-        const rect = cropBox.getBoundingClientRect();
-        cropStart.width = rect.width;
-        cropStart.height = rect.height;
-        cropStart.x = rect.left;
-        cropStart.y = rect.top;
-        
-        cropBox.dataset.resizePosition = position;
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function applyCrop() {
-        if (!isCropping) return;
-        
-        // Get crop coordinates
-        const cropLeft = parseInt(cropBox.style.left);
-        const cropTop = parseInt(cropBox.style.top);
-        const cropWidth = parseInt(cropBox.style.width);
-        const cropHeight = parseInt(cropBox.style.height);
-        
-        // Store crop data
-        cropData = {
-            x: cropLeft,
-            y: cropTop,
-            width: cropWidth,
-            height: cropHeight
-        };
-        
-        // Create cropped image
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        img.onload = () => {
-            // Calculate scale factor
-            const scaleX = img.naturalWidth / previewImage.naturalWidth;
-            const scaleY = img.naturalHeight / previewImage.naturalHeight;
-            
-            canvas.width = cropWidth * scaleX;
-            canvas.height = cropHeight * scaleY;
-            
-            ctx.drawImage(
-                img,
-                cropLeft * scaleX, cropTop * scaleY,
-                cropWidth * scaleX, cropHeight * scaleY,
-                0, 0,
-                canvas.width, canvas.height
-            );
-            
-            // Update preview with cropped image
-            originalImage = canvas.toDataURL();
-            previewImage.src = originalImage;
-            
-            // Reset crop mode
-            cancelCrop();
-        };
-        
-        img.src = originalImage;
-    }
-
-    function cancelCrop() {
-        isCropping = false;
-        cropContainer.style.display = 'none';
-        cropBtn.style.display = 'inline-block';
-        cropApply.style.display = 'none';
-        cropCancel.style.display = 'none';
-        
-        // Remove event listeners
-        cropBox.removeEventListener('mousedown', startDrag);
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', stopDrag);
-        document.removeEventListener('mousemove', resize);
-        document.removeEventListener('mouseup', stopResize);
-    }
-
-    // Resize functionality
-    function resize(e) {
-        if (!isResizing) return;
-        
-        const position = cropBox.dataset.resizePosition;
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
-        
-        let newWidth = cropStart.width;
-        let newHeight = cropStart.height;
-        let newLeft = cropStart.x;
-        let newTop = cropStart.y;
-        
-        switch (position) {
-            case 'se':
-                newWidth = Math.max(50, cropStart.width + deltaX);
-                newHeight = Math.max(50, cropStart.height + deltaY);
-                break;
-            case 'sw':
-                newWidth = Math.max(50, cropStart.width - deltaX);
-                newHeight = Math.max(50, cropStart.height + deltaY);
-                newLeft = cropStart.x + deltaX;
-                break;
-            case 'ne':
-                newWidth = Math.max(50, cropStart.width + deltaX);
-                newHeight = Math.max(50, cropStart.height - deltaY);
-                newTop = cropStart.y + deltaY;
-                break;
-            case 'nw':
-                newWidth = Math.max(50, cropStart.width - deltaX);
-                newHeight = Math.max(50, cropStart.height - deltaY);
-                newLeft = cropStart.x + deltaX;
-                newTop = cropStart.y + deltaY;
-                break;
-        }
-        
-        // Keep within bounds
-        const containerRect = cropContainer.getBoundingClientRect();
-        newWidth = Math.min(newWidth, containerRect.width - newLeft);
-        newHeight = Math.min(newHeight, containerRect.height - newTop);
-        newLeft = Math.max(0, newLeft);
-        newTop = Math.max(0, newTop);
-        
-        cropBox.style.width = newWidth + 'px';
-        cropBox.style.height = newHeight + 'px';
-        cropBox.style.left = newLeft + 'px';
-        cropBox.style.top = newTop + 'px';
-    }
-
-    function stopResize() {
-        isResizing = false;
-        cropBox.dataset.resizePosition = '';
-    }
 
     // Background removal functionality
     function removeBackground() {
@@ -515,16 +496,102 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate average background color
         const bgColor = averageColor(cornerSamples);
         
-        // Remove similar colors
+        // Create edge detection mask
+        const edgeMask = detectEdges(data, width, height);
+        
+        // Remove similar colors with edge preservation
         for (let i = 0; i < data.length; i += 4) {
+            const x = (i / 4) % width;
+            const y = Math.floor((i / 4) / width);
+            
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
             
             // Check if color is similar to background
-            if (colorSimilarity({r, g, b}, bgColor) > 0.9) {
+            const similarity = colorSimilarity({r, g, b}, bgColor);
+            
+            // Don't remove if it's an edge (to preserve subject details)
+            const isEdge = edgeMask[y * width + x] > 100;
+            
+            // Enhanced removal criteria
+            if (similarity > 0.85 && !isEdge) {
                 // Make transparent
                 data[i + 3] = 0; // alpha channel
+            } else if (similarity > 0.7 && !isEdge) {
+                // Partial transparency for similar colors
+                data[i + 3] = Math.round((1 - similarity) * 255);
+            }
+        }
+        
+        // Apply feathering for smoother edges
+        applyFeathering(data, width, height, 3);
+    }
+    
+    function detectEdges(data, width, height) {
+        const sobelX = [
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+        ];
+        
+        const sobelY = [
+            [-1, -2, -1],
+            [0, 0, 0],
+            [1, 2, 1]
+        ];
+        
+        const edgeMask = new Array(width * height);
+        
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                let gx = 0, gy = 0;
+                
+                for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                        const idx = ((y + ky) * width + (x + kx)) * 4;
+                        const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+                        
+                        gx += gray * sobelX[ky + 1][kx + 1];
+                        gy += gray * sobelY[ky + 1][kx + 1];
+                    }
+                }
+                
+                const magnitude = Math.sqrt(gx * gx + gy * gy);
+                edgeMask[y * width + x] = magnitude;
+            }
+        }
+        
+        return edgeMask;
+    }
+    
+    function applyFeathering(data, width, height, radius) {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = (y * width + x) * 4;
+                
+                if (data[idx + 3] === 0) continue; // Skip transparent pixels
+                
+                let totalAlpha = 0;
+                let count = 0;
+                
+                // Sample surrounding pixels
+                for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const ny = y + dy;
+                        const nx = x + dx;
+                        
+                        if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+                            const nIdx = (ny * width + nx) * 4;
+                            totalAlpha += data[nIdx + 3];
+                            count++;
+                        }
+                    }
+                }
+                
+                const avgAlpha = totalAlpha / count;
+                // Smooth the alpha channel
+                data[idx + 3] = Math.round(data[idx + 3] * 0.7 + avgAlpha * 0.3);
             }
         }
     }
